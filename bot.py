@@ -1,52 +1,65 @@
-import scraper
 import constants
+import notification
+import route_subscription
+import scraper
+import service_updates
 
 import datetime
 import pymongo
 import schedule
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, PicklePersistence, Filters
 
 service_update_template = open("templates/service_update_template").read()
 get_updates_template = open("templates/get_updates_template").read()
 
+class InvalidRouteNameException(Exception):
+    pass
+
 def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!") 
 
-def get_service_update(update, context):
-    if len(context.args) > 1 or len(context.args) < 1:
-        context.bot.send_message(chat_id=update.effective_chat.id, 
-                text="Please use \get_updates <route_name> to get updates.")
+def bot_help(update, context):
+    help_message = (
+        """
+        Translink Bot Features:
 
-    connection = pymongo.MongoClient(constants.MONGODB_CONNECTION_URL)
-    updates_db = connection.translink.service_updates
+        General
+        /start
+        /help - Shows this message
 
-    service_updates = updates_db.find({"affected_services": {"$elemMatch": {"name": context.args[0]}}})
-    str_service_updates = get_updates_template.format(
-            route_name=context.args[0],
-            date_time=str(datetime.datetime.now().strftime("%H:%M %d/%m/%Y")))
-    for service_update in service_updates:
-        str_service_updates += "\n"
+        Current Service Updates
+        /service_updates <route_name> - Gets all current service updates for the route name entered
 
-        if service_update["severity"] == "Major":
-            str_service_updates +=  "\U0001F534 "
-        elif service_update["severity"] == "Minor":
-            str_service_updates +=  "\U0001F7E1 "
-        elif service_update["severity"] == "Informative":
-            str_service_updates +=  "\U0001F535 "
+        Notification Subscription
+        /new_subscription <route_name> - Adds a new subscription for the route name. You will receive notifications for that route.
+        /remove_subscription <route_name> - Removes a subscription for the route name. You will no longer receive notifications for that route.
+        /list_subscriptions - Lists all of your current subscriptions
+        """)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=help_message)
 
-        str_service_updates += service_update_template.format(
-                severity=service_update["severity"], title=service_update["title"], 
-                dates=service_update["dates"], url=service_update["url"])
+def scrape_service_update(context):
+    ids = scraper.main()
+    print(ids)
 
-    context.bot.send_message(chat_id=update.effective_chat.id, text=str_service_updates)
+    notification.send_notifications(context, ids["resolved"], "resolved")
+    notification.send_notifications(context, ids["new"], "new")
+    notification.send_notifications(context, ids["updated"], "updated")
 
-updater = Updater(token=constants.TELEGRAM_BOT_TOKEN, use_context=True)
+bot_data = PicklePersistence(filename='bot_data')
+
+updater = Updater(token=constants.TELEGRAM_BOT_TOKEN, persistence=bot_data, use_context=True)
 updater.dispatcher.add_handler(CommandHandler("start", start))
-updater.dispatcher.add_handler(CommandHandler("get_updates", get_service_update))
+updater.dispatcher.add_handler(CommandHandler("help", bot_help))
+updater.dispatcher.add_handler(CommandHandler("service_updates", service_updates.get_service_updates))
+updater.dispatcher.add_handler(CommandHandler("new_subscription", route_subscription.new_subscription))
+updater.dispatcher.add_handler(CommandHandler("list_subscriptions", route_subscription.list_subscriptions))
+updater.dispatcher.add_handler(CommandHandler("remove_subscription", route_subscription.remove_subscription))
+updater.dispatcher.add_handler(MessageHandler(Filters.command, bot_help))
+
+job_minute = updater.job_queue.run_repeating(scrape_service_update, interval=1200, first=0)
+
 updater.start_polling()
 
-schedule.every(5).minutes.do(scraper.main)
-while 1:
-    schedule.run_pending()
+
 
 

@@ -36,7 +36,6 @@ def scrape_service_updates(service_updates_page: bs4.BeautifulSoup):
         service_update["url"] = TRANSLINK_URL + unparsed_service_update.find("a", attrs={"class":"show-notice-details"})["href"]
         service_update["id"] = service_update["url"].split("/")[-1]
         service_update["dates"] = unparsed_service_update.find("td", attrs={"class":"notice-date-cell gridcell hidden-xs"}).text
-
         service_updates.append(service_update)
 
     return service_updates
@@ -68,8 +67,8 @@ def add_updates_to_db(service_updates: list):
     updates_db = connection.translink.service_updates
     
     stored_ids = updates_db.distinct("id")
-    new_ids = [service_update["id"] for service_update in service_updates]
-    resolved_ids = list(set(stored_ids) - set(new_ids))
+    retrieved_ids = [service_update["id"] for service_update in service_updates]
+    resolved_ids = list(set(stored_ids) - set(retrieved_ids))
     
     for resolved_id in resolved_ids:
         updates_db.delete_one({"id": resolved_id})
@@ -79,17 +78,22 @@ def add_updates_to_db(service_updates: list):
     new_ids = []
 
     for update in service_updates:
-        if len(list(updates_db.find({"id": update["id"]}))) != 0:
-            updated_ids.append(update["id"])
-            updates_db.replace_one({"id": update["id"]}, update)
-            print("Updated: " + str(update))
+        existing_service_update = updates_db.find_one({"id": update["id"]})
+        if existing_service_update != None:
+            existing_service_update.pop("_id")
+            if existing_service_update != update:
+                updated_ids.append(update["id"])
+                updates_db.replace_one({"id": update["id"]}, update)
+                print("Updated: " + str(update))
+            else:
+                continue
         else:
             new_ids.append(update["id"])
             updates_db.insert_one(update)
             print("Added: " + str(update))
         
     print("Added all to db")
-    return resolved_ids, new_ids, updated_ids
+    return {"resolved": resolved_ids, "new": new_ids, "updated": updated_ids}
     
 
 def main():
@@ -104,8 +108,6 @@ def main():
         service_update.update(details)
 
     print("Finished Scraping")
-    print(service_updates)
-    
     return add_updates_to_db(service_updates)
 
 if __name__ == "__main__":
