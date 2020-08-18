@@ -16,8 +16,6 @@ def list_subscriptions(update, context, added_route_name=None):
     context.bot.send_message(chat_id=update.effective_chat.id, text=str_subscription_list)
 
     print(context.bot_data)
-    print()
-    print(context.user_data)
 
 def new_subscription(update, context):
     if len(context.args) < 1:

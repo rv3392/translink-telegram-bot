@@ -9,9 +9,6 @@ import pymongo
 import schedule
 from telegram.ext import Updater, CommandHandler, MessageHandler, PicklePersistence, Filters
 
-service_update_template = open("templates/service_update_template").read()
-get_updates_template = open("templates/get_updates_template").read()
-
 class InvalidRouteNameException(Exception):
     pass
 
