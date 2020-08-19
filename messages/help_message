@@ -1,0 +1,13 @@
+Translink Bot Features:
+
+General
+/start
+/help - Shows this message
+
+Current Service Updates
+/service_updates <route_name> - Gets all current service updates for the route name entered
+
+Notification Subscription
+/new_subscription <route_name> - Adds a new subscription for the route name. You will receive notifications for that route.
+/remove_subscription <route_name> - Removes a subscription for the route name. You will no longer receive notifications for that route.
+/list_subscriptions - Lists all of your current subscriptions

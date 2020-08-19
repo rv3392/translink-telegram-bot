@@ -12,26 +12,12 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, PicklePersiste
 class InvalidRouteNameException(Exception):
     pass
 
+help_message = open("messages/help_message").read()
+
 def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!") 
 
 def bot_help(update, context):
-    help_message = (
-        """
-        Translink Bot Features:
-
-        General
-        /start
-        /help - Shows this message
-
-        Current Service Updates
-        /service_updates <route_name> - Gets all current service updates for the route name entered
-
-        Notification Subscription
-        /new_subscription <route_name> - Adds a new subscription for the route name. You will receive notifications for that route.
-        /remove_subscription <route_name> - Removes a subscription for the route name. You will no longer receive notifications for that route.
-        /list_subscriptions - Lists all of your current subscriptions
-        """)
     context.bot.send_message(chat_id=update.effective_chat.id, text=help_message)
 
 def scrape_service_update(context):

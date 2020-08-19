@@ -4,8 +4,8 @@ import datetime
 import pymongo
 from telegram.ext import Updater, CommandHandler
 
-service_update_template = open("templates/service_update_template").read()
-get_updates_template = open("templates/get_updates_template").read()
+service_update_template = open("messages/service_update_template").read()
+get_updates_template = open("messages/get_updates_template").read()
 
 def get_service_updates_message(route_name, service_updates):
     str_service_updates = get_updates_template.format(
