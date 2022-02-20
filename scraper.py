@@ -1,9 +1,8 @@
-import bs4
-
-import pymongo
+import os
 import urllib.request
 
-import constants
+import bs4
+import pymongo
 
 SERVICE_UPDATES_URL = "https://translink.com.au/service-updates"
 TRANSLINK_URL = "https://translink.com.au/"
@@ -63,7 +62,7 @@ def scrape_service_update_details(service_update_page: bs4.BeautifulSoup):
     return details
 
 def add_updates_to_db(service_updates: list):
-    connection = pymongo.MongoClient(constants.MONGODB_CONNECTION_URL)
+    connection = pymongo.MongoClient(os.environ.get("MONGODB_CONNECTION_URL"))
     updates_db = connection.translink.service_updates
     
     stored_ids = updates_db.distinct("id")

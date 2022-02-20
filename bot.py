@@ -1,12 +1,11 @@
-import constants
+import datetime
+import os
+
 import notification
 import route_subscription
 import scraper
 import service_updates
 
-import datetime
-import pymongo
-import schedule
 from telegram.ext import Updater, CommandHandler, MessageHandler, PicklePersistence, Filters
 
 class InvalidRouteNameException(Exception):
@@ -30,7 +29,8 @@ def scrape_service_update(context):
 
 bot_data = PicklePersistence(filename='bot_data')
 
-updater = Updater(token=constants.TELEGRAM_BOT_TOKEN, persistence=bot_data, use_context=True)
+telegram_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+updater = Updater(token=telegram_bot_token, persistence=bot_data, use_context=True)
 updater.dispatcher.add_handler(CommandHandler("start", start))
 updater.dispatcher.add_handler(CommandHandler("help", bot_help))
 updater.dispatcher.add_handler(CommandHandler("service_updates", service_updates.get_service_updates))

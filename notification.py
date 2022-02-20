@@ -1,4 +1,5 @@
-import constants
+import os
+
 import service_updates
 
 import pymongo
@@ -11,7 +12,7 @@ def send_notification(context, route_name, chat_id, notification_type, service_u
     context.bot.send_message(chat_id=chat_id, text="Use /service_updates {} to view all current notifications for that route".format(route_name))
 
 def send_notifications(context, affected_route_ids, notification_type):
-    connection = pymongo.MongoClient(constants.MONGODB_CONNECTION_URL)
+    connection = pymongo.MongoClient(os.environ.get("MONGODB_CONNECTION_URL"))
     updates_db = connection.translink.service_updates
 
     for route_id in affected_route_ids:

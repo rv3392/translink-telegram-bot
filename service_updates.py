@@ -1,6 +1,5 @@
-import constants
-
 import datetime
+
 import pymongo
 from telegram.ext import Updater, CommandHandler
 
@@ -33,7 +32,7 @@ def get_service_updates(update, context):
                 text="Please use /get_updates <route_name> to get updates.")
         return
 
-    connection = pymongo.MongoClient(constants.MONGODB_CONNECTION_URL)
+    connection = pymongo.MongoClient(os.environ.get("MONGODB_CONNECTION_URL"))
     updates_db = connection.translink.service_updates
 
     route_name = " ".join(context.args)
